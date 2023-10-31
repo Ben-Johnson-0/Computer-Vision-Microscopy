@@ -3,9 +3,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# fp = "./data/Denoising_Tribolium/train_data/data_label.npz"
 fp = "./data/Synthetic_tubulin_gfp/train_data/data_label.npz"
 data = np.load(fp)
+
+for k in data.keys():
+     print(k)
 
 print('X', data['X'].shape)
 print('Y', data['Y'].shape)
