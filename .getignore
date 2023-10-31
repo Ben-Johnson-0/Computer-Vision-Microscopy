@@ -1,2 +1,5 @@
 data/
 TODO.md
+*.png
+*.tif
+*.npz
