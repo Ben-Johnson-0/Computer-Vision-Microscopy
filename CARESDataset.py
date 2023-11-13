@@ -15,11 +15,12 @@ class CARESDataset(Dataset):
 
     def __getitem__(self, idx):
         ''' Get the image and the target'''
-        image = self.images[idx]
-        target = self.targets[idx]
+        image = torch.tensor(self.images[idx])
+        target = torch.tensor(self.targets[idx])
 
         if self.normalize:
-            image = image/255
+            # image = torch.sigmoid(image)
+            target = torch.sigmoid(target)
 
         return image, target
 
@@ -33,5 +34,5 @@ if __name__ == '__main__':
     ds_train = CARESDataset(fp, normalize=False)
 
     image, target = ds_train[0]
+    print(image.shape)
     print(target.shape)
-    print(target)
