@@ -44,7 +44,7 @@ def train_one_epoch(model, dataloader):
     return avg_loss
 
 
-def test(model, dataloader):
+def test(model, dataloader, epoch):
     model.eval()
     for i, (images, targets) in enumerate(dataloader, 1):
         # Move to correct device
@@ -57,9 +57,9 @@ def test(model, dataloader):
         predict = model(images)
         # predict = torch.sigmoid(predict)
         if i == 1:
-            save_img(images[0, 0, :, :].detach().cpu().numpy(), f"input", f"input.png", images.shape[-2], images.shape[-1])
-            save_img(targets[0, 0, :, :].detach().cpu().numpy(), f"target", f"target.png", targets.shape[-2], targets.shape[-1])
-            save_img(predict[0, 0, :, :].detach().cpu().numpy(), f"denoised", f"denoising.png", predict.shape[-2], predict.shape[-1])
+            save_img(images[0, 0, :, :].detach().cpu().numpy(), f"Epoch {epoch} input", f"outputs/{epoch}_input.png", images.shape[-2], images.shape[-1])
+            save_img(targets[0, 0, :, :].detach().cpu().numpy(), f"Epoch {epoch} target", f"outputs/{epoch}_target.png", targets.shape[-2], targets.shape[-1])
+            save_img(predict[0, 0, :, :].detach().cpu().numpy(), f"Epoch {epoch} denoised", f"outputs/{epoch}_denoising.png", predict.shape[-2], predict.shape[-1])
 
 
 
@@ -86,6 +86,6 @@ if __name__ == '__main__':
         print(f"Epoch {i} of {NUM_EPOCHS}")
         avg_loss = train_one_epoch(model, dl_train)
         print(f"  Average loss: {avg_loss}")
-        test(model, dl_train)
+        test(model, dl_train, i)
     
     print("Complete.")
