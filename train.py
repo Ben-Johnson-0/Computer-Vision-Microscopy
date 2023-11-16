@@ -2,14 +2,13 @@ import torch
 from torch.utils.data import DataLoader
 from unet_model import UNet
 from CARESDataset import CARESDataset
-from utils import collate
+from utils import collate, save_img
 
 # Hyperparameters
 NUM_EPOCHS = 10
 ALPHA = 1e-3
 BATCH_SIZE = 5
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-# DEVICE = torch.device('cpu')
 
 fp = "./data/Synthetic_tubulin_gfp/train_data/data_label.npz"
 
@@ -45,6 +44,25 @@ def train_one_epoch(model, dataloader):
     return avg_loss
 
 
+def test(model, dataloader):
+    model.eval()
+    for i, (images, targets) in enumerate(dataloader, 1):
+        # Move to correct device
+        images = torch.stack(images, dim=0)
+        images = images.to(DEVICE)
+        targets = torch.stack(targets, dim=0)
+        targets = targets.to(DEVICE)
+
+        # Perform the forward pass
+        predict = model(images)
+        # predict = torch.sigmoid(predict)
+        if i == 1:
+            save_img(images[0, 0, :, :].detach().cpu().numpy(), f"input", f"input.png", images.shape[-2], images.shape[-1])
+            save_img(targets[0, 0, :, :].detach().cpu().numpy(), f"target", f"target.png", targets.shape[-2], targets.shape[-1])
+            save_img(predict[0, 0, :, :].detach().cpu().numpy(), f"denoised", f"denoising.png", predict.shape[-2], predict.shape[-1])
+
+
+
 if __name__ == '__main__':
 
     # Remove randomness
@@ -68,5 +86,6 @@ if __name__ == '__main__':
         print(f"Epoch {i} of {NUM_EPOCHS}")
         avg_loss = train_one_epoch(model, dl_train)
         print(f"  Average loss: {avg_loss}")
+        test(model, dl_train)
     
     print("Complete.")
