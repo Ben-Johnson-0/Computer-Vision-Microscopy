@@ -6,6 +6,7 @@ from utils import collate, save_img
 
 # Hyperparameters
 NUM_EPOCHS = 10
+EPOCHS_PER_TEST = 1
 ALPHA = 1e-3
 BATCH_SIZE = 5
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -86,6 +87,8 @@ if __name__ == '__main__':
         print(f"Epoch {i} of {NUM_EPOCHS}")
         avg_loss = train_one_epoch(model, dl_train)
         print(f"  Average loss: {avg_loss}")
-        test(model, dl_train, i)
-    
+        if i % EPOCHS_PER_TEST == 0:
+            test(model, dl_train, i)
+        
+    torch.save(model, 'tubulin_model.pt')
     print("Complete.")

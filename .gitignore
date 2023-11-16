@@ -3,3 +3,4 @@ TODO.md
 *.png
 *.tif
 *.npz
+*.pt
