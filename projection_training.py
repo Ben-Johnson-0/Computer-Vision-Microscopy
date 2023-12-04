@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader, random_split
 
 from CARESDataset import CARESDataset
 from rnn_model import ProjectionRNN
-from utils import collate
+from utils import save_img
 
 # Remove randomness
 torch.manual_seed(1)
@@ -14,9 +14,10 @@ IMAGE_SIZE = 64*64
 N_HIDDEN = 64
 BATCH_SIZE = 8
 ALPHA = 1e-3
-EPOCHS = 10
+EPOCHS = 1000
 PERCENT_TRAIN = 0.8
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+# DEVICE = torch.device('cpu')
 
 # Create model
 print("Creating model")
@@ -93,9 +94,17 @@ for i, (images, targets) in enumerate(dl_test, 1):
     loss = mse_loss(predict, targets)
     avg_loss += loss.item()
 
+    # Save example image
+    if i == 1:
+        save_img(targets[0, :].detach().cpu().numpy(), "Projection Target 0", "outputs/projection_target0.png", 64, 64)
+        save_img(predict[0, :].detach().cpu().numpy(), "Projection Prediction 0", "outputs/projection_prediction0.png", 64, 64)
+        save_img(targets[1, :].detach().cpu().numpy(), "Projection Target 1", "outputs/projection_target1.png", 64, 64)
+        save_img(predict[1, :].detach().cpu().numpy(), "Projection Prediction 1", "outputs/projection_prediction1.png", 64, 64)
+        save_img(targets[2, :].detach().cpu().numpy(), "Projection Target 2", "outputs/projection_target2.png", 64, 64)
+        save_img(predict[2, :].detach().cpu().numpy(), "Projection Prediction 2", "outputs/projection_prediction2.png", 64, 64)
+
 avg_loss /= len(dl_train)
 print(avg_loss)
-
 
 print("Saving model...")
 torch.save(model, 'projection_model.pt')
