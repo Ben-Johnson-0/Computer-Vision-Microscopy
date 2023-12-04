@@ -40,14 +40,12 @@ for epoch in range(EPOCHS):
         optim.zero_grad()
 
         # Images shape: [Batch, Channels, Sequence_length, x, y]
-        images = torch.stack(images, dim=0)
-        # Images shape: [Batch, Sequence_length, x*y*channels]
+        # Images reshape: [Batch, Sequence_length, x*y*channels]
         images = images.reshape(images.size(0), images.size(2), -1)
         images = images.to(DEVICE).float()
 
         # Targets shape: [Batch, Channels, x, y]
-        targets = torch.stack(targets, dim=0)
-        # Targets shape: [Batch, x*y*channels]
+        # Targets reshape: [Batch, x*y*channels]
         targets = targets.reshape(targets.size(0), -1)
         targets = targets.to(DEVICE).float()
 
