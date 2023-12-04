@@ -2,23 +2,24 @@ import torch
 import torch.nn as nn
 
 class ProjectionRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size, output_size, num_layers):
         super(ProjectionRNN, self).__init__()
 
-        self.hidden_size = hidden_size
-        self.i2h = nn.Linear(input_size + hidden_size, hidden_size)
-        self.h2o = nn.Linear(hidden_size, output_size)
-        self.softmax = nn.LogSoftmax(dim=1)
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        self.linear = nn.Linear(hidden_size, output_size)
 
-    def forward(self, x, hidden):
+    def forward(self, x):
+        # x shape: [Batch, Sequence_length, input_size]
+        # lstm_out shape: [Batch, sequence_length, hidden_size]
+        lstm_out, _ = self.lstm(x)
 
-        combined = torch.cat((x, hidden), 1)
+        # Last time step's out is the projection 
+        # projection shape: [Batch, hidden_size]
+        projection = lstm_out[:, -1, :]
 
-        # Hidden state
-        hidden = self.i2h(combined)
-        output = self.h2o(hidden)
-        output = self.softmax(output)
-        return output, hidden
+        # Project hidden state to output size
+        # output shape: [Batch, output_size]
+        output = self.linear(projection)
+        # output = self.softmax(output)
 
-    def initHidden(self):
-        return torch.zeros(1, self.hidden_size)
+        return output

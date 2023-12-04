@@ -1,19 +1,23 @@
+import torch
+import torch.nn as nn
+
 from CARESDataset import CARESDataset
+from rnn_model import ProjectionRNN
 from utils import collate
 
 # Remove randomness
 torch.manual_seed(1)
 torch.cuda.manual_seed(1)
 
-FRAMES = 50
 IMAGE_SIZE = 64*64
-DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+N_HIDDEN = 64
+EPOCHS = 5
 ALPHA = 1e-3
+DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Create model
 print("Creating model")
-n_hidden = 64
-model = ProjectionRNN(FRAMES*IMAGE_SIZE, n_hidden, IMAGE_SIZE)
+model = ProjectionRNN(input_size=IMAGE_SIZE, hidden_size=N_HIDDEN, output_size=IMAGE_SIZE, num_layers=1)
 model.to(DEVICE)
 
 # Optimizer
@@ -29,33 +33,41 @@ dl_train = torch.utils.data.DataLoader(ds_train, batch_size=5, shuffle=True,
 print("Training model")
 avg_loss = 0.0
 model.train()
-for i, (images, targets) in enumerate(dl_train, 1):
-    # Empty the gradients first
-    optim.zero_grad()
+for epoch in range(EPOCHS):
+    print(f"Epoch {epoch} of {EPOCHS}")
+    for i, (images, targets) in enumerate(dl_train, 1):
+        # Empty the gradients first
+        optim.zero_grad()
 
-    # Move to correct device
-    images = torch.stack(images, dim=0)
-    images = images.to(DEVICE).float()
-    targets = torch.stack(targets, dim=0)
-    targets = targets.to(DEVICE).float()
+        # Images shape: [Batch, Channels, Sequence_length, x, y]
+        images = torch.stack(images, dim=0)
+        # Images shape: [Batch, Sequence_length, x*y*channels]
+        images = images.reshape(images.size(0), images.size(2), -1)
+        images = images.to(DEVICE).float()
 
-    # Perform the forward pass
-    predict = model(images)
+        # Targets shape: [Batch, Channels, x, y]
+        targets = torch.stack(targets, dim=0)
+        # Targets shape: [Batch, x*y*channels]
+        targets = targets.reshape(targets.size(0), -1)
+        targets = targets.to(DEVICE).float()
 
-    # Loss
-    loss = nn.functional.binary_cross_entropy(predict, targets, reduction = 'mean')
-    avg_loss += loss.item()
+        # Perform the forward pass
+        predict = model(images)
 
-    # Perform the backward pass
-    loss.backward()
+        # Loss
+        mse_loss = nn.MSELoss()
+        loss = mseloss(predict, targets)
+        avg_loss += loss.item()
 
-    # Perform SGD update
-    optim.step()
+        # Perform the backward pass
+        loss.backward()
 
-avg_loss /= len(dl_train)
-print(avg_loss)
+        # Perform SGD update
+        optim.step()
 
-x = dl_train[0]
-out = model(x)
-print(out.shape)
-print(out)
+    avg_loss /= len(dl_train)
+    print(avg_loss)
+
+print("Saving model...")
+torch.save(model, 'projection_model.pt')
+print("Complete.")
