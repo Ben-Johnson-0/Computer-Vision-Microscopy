@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-fp = "./data/Synthetic_tubulin_gfp/train_data/data_label.npz"
+fp = "../data/Synthetic_tubulin_gfp/train_data/data_label.npz"
 data = np.load(fp)
 
 for k in data.keys():

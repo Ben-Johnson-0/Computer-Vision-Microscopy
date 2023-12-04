@@ -14,7 +14,8 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 SAVE_IMAGES = True
 MODEL_FILENAME = 'tubulin_model_testing.pt'
 
-fp = "./data/Synthetic_tubulin_gfp/train_data/data_label.npz"
+# fp = "./data/Synthetic_tubulin_gfp/train_data/data_label.npz"
+fp = "./data/Synthetic_tubulin_granules/train_data/channel_tubules/data_label.npz"
 
 
 def train_one_epoch(model, dataloader):
@@ -27,10 +28,10 @@ def train_one_epoch(model, dataloader):
 
         # Move to correct device
         images = torch.stack(images, dim=0)
-        images = images.to(DEVICE)
+        images = images.to(DEVICE).float()
         targets = torch.stack(targets, dim=0)
-        targets = targets.to(DEVICE)
-
+        targets = targets.to(DEVICE).float()
+                
         # Perform the forward pass
         predict = model(images)
         predict = torch.sigmoid(predict) # Check U-Net for Softmax to replace this
@@ -56,9 +57,9 @@ def test(model, dataloader, epoch):
     for i, (images, targets) in enumerate(dataloader, 1):
         # Move to correct device
         images = torch.stack(images, dim=0)
-        images = images.to(DEVICE)
+        images = images.to(DEVICE).float()
         targets = torch.stack(targets, dim=0)
-        targets = targets.to(DEVICE)
+        targets = targets.to(DEVICE).float()
 
         # Perform the forward pass
         predict = model(images)

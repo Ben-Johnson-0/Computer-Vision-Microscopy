@@ -9,29 +9,31 @@ class CARESDataset(Dataset):
     def __init__(self, npz_file, normalize=True):
         self.normalize = normalize
 
-        data = np.load(npz_file)
-        self.images = data['X']
-        self.targets = data['Y']
+        with np.load(npz_file, mmap_mode='r') as data:
+            self.length = len(data['Y'])
+        
+        self.data = np.load(npz_file, mmap_mode='r')
+
 
     def __getitem__(self, idx):
         ''' Get the image and the target'''
-        image = torch.tensor(self.images[idx])
-        target = torch.tensor(self.targets[idx])
+        image = torch.tensor(self.data['X'][idx])
+        target = torch.tensor(self.data['Y'][idx])
 
         if self.normalize:
-            # image = torch.sigmoid(image)
             target = torch.sigmoid(target)
 
         return image, target
 
     def __len__(self):
-        return self.images.shape[0]
+        return self.length
 
 
 if __name__ == '__main__':
-    # fp = "./data/Denoising_Tribolium/train_data/data_label.npz"
-    fp = "./data/Synthetic_tubulin_gfp/train_data/data_label.npz"
+
+    fp = "./data/Projection_Flywing/train_data/data_label.npz"
     ds_train = CARESDataset(fp, normalize=False)
+    print(len(ds_train))
 
     image, target = ds_train[0]
     print(image.shape)
