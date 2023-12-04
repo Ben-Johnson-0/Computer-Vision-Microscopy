@@ -12,7 +12,8 @@ torch.cuda.manual_seed(1)
 
 IMAGE_SIZE = 64*64
 N_HIDDEN = 64
-EPOCHS = 5
+BATCH_SIZE = 8
+EPOCHS = 10
 ALPHA = 1e-3
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -28,7 +29,7 @@ optim = torch.optim.Adam(model.parameters(), lr = ALPHA)
 print("Loading Dataset")
 fp = "./data/Projection_Flywing/train_data/data_label.npz"
 dataset = CARESDataset(fp, normalize=True)
-dl_train = DataLoader(dataset, batch_size=5, shuffle=True)
+dl_train = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 print("Training model")
 avg_loss = 0.0
@@ -54,7 +55,7 @@ for epoch in range(EPOCHS):
 
         # Loss
         mse_loss = nn.MSELoss()
-        loss = mseloss(predict, targets)
+        loss = mse_loss(predict, targets)
         avg_loss += loss.item()
 
         # Perform the backward pass
