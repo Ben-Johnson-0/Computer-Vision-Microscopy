@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
 
 from CARESDataset import CARESDataset
 from rnn_model import ProjectionRNN
@@ -26,9 +27,8 @@ optim = torch.optim.Adam(model.parameters(), lr = ALPHA)
 # Dataset and Dataloader
 print("Loading Dataset")
 fp = "./data/Projection_Flywing/train_data/data_label.npz"
-ds_train = CARESDataset(fp, normalize=True)
-dl_train = torch.utils.data.DataLoader(ds_train, batch_size=5, shuffle=True, 
-                        num_workers=0, collate_fn=collate)
+dataset = CARESDataset(fp, normalize=True)
+dl_train = DataLoader(dataset, batch_size=5, shuffle=True)
 
 print("Training model")
 avg_loss = 0.0
