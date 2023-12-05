@@ -36,3 +36,39 @@ class CARESDataset(Dataset):
 
     def __len__(self):
         return self.length
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    from torchvision.utils import save_image
+
+    fp = "./data/Projection_Flywing/train_data/data_label.npz"
+    dataset = CARESDataset(fp, normalize=True)
+    dl_train = torch.utils.data.DataLoader(dataset, batch_size=5, shuffle=True)
+
+    for (image, target) in dl_train:
+        print(image.shape)
+        print(target.shape)
+
+        # for i in range(image.shape[2]):
+        #     save_image(image[0,0,i,:,:], f'image{i}.png')
+
+        max_proj = torch.max(image[0,0,:,:,:], dim=0)
+        print(max_proj.values)
+        save_image(max_proj.values, 'max-projection.png')
+
+        image_fft = torch.fft.fft2(image, dim=(-2, -1))
+        # Example: Keep only the low-frequency components (e.g., 10% of the highest magnitudes)
+        magnitude = torch.abs(image_fft)
+        threshold = torch.topk(magnitude.view(-1), int(0.1 * magnitude.numel()), largest=True).values.min()
+        image_fft[magnitude < threshold] = 0
+
+        # Step 3: Apply inverse FFT to obtain the denoised image
+        denoised_image = torch.fft.ifft2(image_fft, dim=(-2, -1)).real
+
+        for i in range(denoised_image.shape[2]):
+            save_image(denoised_image[0,0,i,:,:], f'image{i}.png')
+
+        save_image(torch.max(denoised_image[0,0,:,:,:],dim=0 ).values, 'fft-max-projection.png')
+
+        save_image(target[0,0,:,:], 'target.png')
+        exit()
