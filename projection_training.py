@@ -14,12 +14,12 @@ torch.manual_seed(1)
 torch.cuda.manual_seed(1)
 
 IMAGE_SIZE = 64*64
-N_HIDDEN = 512
+N_HIDDEN = 1024
 BATCH_SIZE = 8
 REC_LAYERS = 1
-ALPHA = 1e-2
-EPOCHS = 1
-PERCENT_TRAIN = 0.1
+ALPHA = 15e-5
+EPOCHS = 1000
+PERCENT_TRAIN = 0.8
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Create model
@@ -32,8 +32,9 @@ optim = torch.optim.Adam(model.parameters(), lr = ALPHA)
 
 # Dataset and Dataloader
 print("Loading Dataset")
-fp = "./data/Projection_Flywing/train_data/data_label.npz"
-dataset = CARESDataset(fp, normalize=True)
+# fp = "./data/Projection_Flywing/train_data/data_label.npz"
+fp = "./data/mini_Projection_Flywing"
+dataset = CARESDataset(fp, normalize=False)  # True
 generator = torch.Generator().manual_seed(1)
 ds_train, ds_test = random_split(dataset, [PERCENT_TRAIN, 1-PERCENT_TRAIN], generator=generator)
 dl_train = DataLoader(ds_train, batch_size=BATCH_SIZE, shuffle=True)
@@ -75,8 +76,9 @@ for epoch in range(EPOCHS):
         optim.step()
 
         if i == 1:  #debugging the all batches are the same bug
-            for i in range(predict.shape[0]):
-                print(predict[i])
+            for j in range(predict.shape[0]):
+                if j < 2:
+                    print(predict[j])
 
     avg_loss /= len(dl_train)
     print(avg_loss)
