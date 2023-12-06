@@ -4,25 +4,27 @@ from torch.utils.data import DataLoader, random_split
 
 from CARESDataset import CARESDataset
 from rnn_model import ProjectionRNN
-from utils import save_img, fft_denoise
+from utils import save_img
+
+# TODO
+#  Solve the all batches give the same value bug
 
 # Remove randomness
 torch.manual_seed(1)
 torch.cuda.manual_seed(1)
 
-FFT_RATIO = 0.1
 IMAGE_SIZE = 64*64
-N_HIDDEN = 50
+N_HIDDEN = 512
 BATCH_SIZE = 8
-ALPHA = 1e-3
-EPOCHS = 20
-PERCENT_TRAIN = 0.8
+REC_LAYERS = 1
+ALPHA = 1e-2
+EPOCHS = 1
+PERCENT_TRAIN = 0.1
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-# DEVICE = torch.device('cpu')
 
 # Create model
 print("Creating model")
-model = ProjectionRNN(input_size=IMAGE_SIZE, hidden_size=N_HIDDEN, output_size=IMAGE_SIZE, num_layers=1)
+model = ProjectionRNN(input_size=IMAGE_SIZE, hidden_size=N_HIDDEN, output_size=IMAGE_SIZE, num_layers=REC_LAYERS)
 model.to(DEVICE)
 
 # Optimizer
@@ -32,7 +34,7 @@ optim = torch.optim.Adam(model.parameters(), lr = ALPHA)
 print("Loading Dataset")
 fp = "./data/Projection_Flywing/train_data/data_label.npz"
 dataset = CARESDataset(fp, normalize=True)
-generator = torch.Generator()
+generator = torch.Generator().manual_seed(1)
 ds_train, ds_test = random_split(dataset, [PERCENT_TRAIN, 1-PERCENT_TRAIN], generator=generator)
 dl_train = DataLoader(ds_train, batch_size=BATCH_SIZE, shuffle=True)
 dl_test = DataLoader(ds_test, batch_size=BATCH_SIZE, shuffle=False)
@@ -47,15 +49,16 @@ for epoch in range(EPOCHS):
         optim.zero_grad()
 
         # Images shape: [Batch, Channels, Sequence_length, x, y]
-        # Images reshape: [Batch, Sequence_length, x*y*channels]
-        images = images.reshape(images.size(0), images.size(2), -1)
         images = images.to(DEVICE).float()
-        images = fft_denoise(images, ratio=FFT_RATIO)
+        images = torch.squeeze(images, dim=1)
+        # Images reshape: [Batch, Sequence_length, x*y]
+        images = images.reshape(images.size(0), images.size(1), -1)
 
         # Targets shape: [Batch, Channels, x, y]
-        # Targets reshape: [Batch, x*y*channels]
-        targets = targets.reshape(targets.size(0), -1)
         targets = targets.to(DEVICE).float()
+        targets = torch.squeeze(targets, dim=1)
+        # Targets reshape: [Batch, x*y]
+        targets = targets.reshape(targets.size(0), -1)
 
         # Perform the forward pass
         predict = model(images)
@@ -71,6 +74,10 @@ for epoch in range(EPOCHS):
         # Perform SGD update
         optim.step()
 
+        if i == 1:  #debugging the all batches are the same bug
+            for i in range(predict.shape[0]):
+                print(predict[i])
+
     avg_loss /= len(dl_train)
     print(avg_loss)
 
@@ -80,15 +87,16 @@ model.eval()
 with torch.no_grad():
     for i, (images, targets) in enumerate(dl_test, 1):
         # Images shape: [Batch, Channels, Sequence_length, x, y]
-        # Images reshape: [Batch, Sequence_length, x*y*channels]
-        images = images.reshape(images.size(0), images.size(2), -1)
         images = images.to(DEVICE).float()
-        images = fft_denoise(images, ratio=FFT_RATIO)
+        images = torch.squeeze(images, dim=1)
+        # Images reshape: [Batch, Sequence_length, x*y]
+        images = images.reshape(images.size(0), images.size(1), -1)
 
         # Targets shape: [Batch, Channels, x, y]
-        # Targets reshape: [Batch, x*y*channels]
-        targets = targets.reshape(targets.size(0), -1)
         targets = targets.to(DEVICE).float()
+        targets = torch.squeeze(targets, dim=1)
+        # Targets reshape: [Batch, x, y]
+        targets = targets.reshape(targets.size(0), -1)
 
         # Perform the forward pass
         predict = model(images)
