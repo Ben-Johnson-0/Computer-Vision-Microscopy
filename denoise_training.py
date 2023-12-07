@@ -1,21 +1,23 @@
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from unet_model import UNet
-from CARESDataset import CARESDataset
+from CAREDataset import CAREDataset
 from utils import collate, save_img
 
 # Hyperparameters
-NUM_EPOCHS = 10
-EPOCHS_PER_TEST = 1
+SEED = 1
+NUM_EPOCHS = 100
+EPOCHS_PER_TEST = 20
 ALPHA = 1e-3
-BATCH_SIZE = 5
+BATCH_SIZE = 16
+PERCENT_TRAIN = 0.8
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 SAVE_IMAGES = True
 MODEL_FILENAME = 'tubulin_model_testing.pt'
 
-# fp = "./data/Synthetic_tubulin_gfp/train_data/data_label.npz"
-fp = "./data/Synthetic_tubulin_granules/train_data/channel_tubules/data_label.npz"
+fp = "./data/Synthetic_tubulin_gfp/train_data/data_label.npz"
+# fp = "./data/Synthetic_tubulin_granules/train_data/channel_tubules/data_label.npz"
 
 
 def train_one_epoch(model, dataloader):
@@ -27,16 +29,14 @@ def train_one_epoch(model, dataloader):
         optim.zero_grad()
 
         # Move to correct device
-        images = torch.stack(images, dim=0)
         images = images.to(DEVICE).float()
-        targets = torch.stack(targets, dim=0)
         targets = targets.to(DEVICE).float()
                 
         # Perform the forward pass
         predict = model(images)
-        predict = torch.sigmoid(predict) # Check U-Net for Softmax to replace this
 
         # Loss
+        predict = torch.sigmoid(predict)
         loss = nn.functional.binary_cross_entropy(predict, targets, reduction = 'mean')
         avg_loss += loss.item()
 
@@ -56,9 +56,7 @@ def test(model, dataloader, epoch):
     model.eval()
     for i, (images, targets) in enumerate(dataloader, 1):
         # Move to correct device
-        images = torch.stack(images, dim=0)
         images = images.to(DEVICE).float()
-        targets = torch.stack(targets, dim=0)
         targets = targets.to(DEVICE).float()
 
         # Perform the forward pass
@@ -83,13 +81,15 @@ def test(model, dataloader, epoch):
 if __name__ == '__main__':
 
     # Remove randomness
-    torch.manual_seed(1)
-    torch.cuda.manual_seed(1)
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed(SEED)
 
     # Dataset and Dataloader
-    ds_train = CARESDataset(fp, normalize=True)
-    dl_train = DataLoader(ds_train, batch_size=BATCH_SIZE, shuffle=True, 
-                          num_workers=0, collate_fn=collate)
+    dataset = CAREDataset(fp, normalize=True)
+    generator = torch.Generator().manual_seed(SEED)
+    ds_train, ds_test = random_split(dataset, [PERCENT_TRAIN, 1-PERCENT_TRAIN], generator=generator)
+    dl_train = DataLoader(ds_train, batch_size=BATCH_SIZE, shuffle=True)
+    dl_test = DataLoader(ds_test, batch_size=BATCH_SIZE, shuffle=False)
 
     # model
     model = UNet(n_channels = 1, n_classes = 1)
@@ -104,7 +104,7 @@ if __name__ == '__main__':
         avg_loss = train_one_epoch(model, dl_train)
         print(f"  Average loss: {avg_loss}")
         if i % EPOCHS_PER_TEST == 0:
-            acc = test(model, dl_train, i)
+            acc = test(model, dl_test, i)
             print(f"Test MSE Loss: {acc}")
         
     print(f"Saving model as \"{MODEL_FILENAME}\"")

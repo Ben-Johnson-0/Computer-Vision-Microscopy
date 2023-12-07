@@ -4,8 +4,8 @@ from torch.utils.data import Dataset
 from zipfile import ZipFile
 from os import path
 
-class CARESDataset(Dataset):
-    ''' Cell dataset for CARES data '''
+class CAREDataset(Dataset):
+    ''' Cell dataset for CARE data '''
 
     def __init__(self, np_file, normalize=True):
         """ np_file can be a .npz file or the source directory of the X.npy and Y.npy files """
@@ -36,16 +36,3 @@ class CARESDataset(Dataset):
 
     def __len__(self):
         return self.length
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    from torchvision.utils import save_image
-
-    fp = "./data/Projection_Flywing/train_data/data_label.npz"
-    dataset = CARESDataset(fp, normalize=False)
-
-    mini = dataset[:1000]
-    print(mini[0].shape)
-    print(mini[1].shape)
-    np.save("mini_Projection_Flywing/X.npy", mini[0])
-    np.save("mini_Projection_Flywing/Y.npy", mini[1])

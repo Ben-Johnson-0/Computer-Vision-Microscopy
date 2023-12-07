@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
 
-from CARESDataset import CARESDataset
+from CAREDataset import CAREDataset
 from rnn_model import ProjectionRNN
 from utils import save_img
 
@@ -14,10 +14,10 @@ torch.manual_seed(1)
 torch.cuda.manual_seed(1)
 
 IMAGE_SIZE = 64*64
-N_HIDDEN = 1024
+N_HIDDEN = 2048
 BATCH_SIZE = 8
 REC_LAYERS = 1
-ALPHA = 15e-5
+ALPHA = 1e-5
 EPOCHS = 1000
 PERCENT_TRAIN = 0.8
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -34,7 +34,7 @@ optim = torch.optim.Adam(model.parameters(), lr = ALPHA)
 print("Loading Dataset")
 # fp = "./data/Projection_Flywing/train_data/data_label.npz"
 fp = "./data/mini_Projection_Flywing"
-dataset = CARESDataset(fp, normalize=False)  # True
+dataset = CAREDataset(fp, normalize=False)
 generator = torch.Generator().manual_seed(1)
 ds_train, ds_test = random_split(dataset, [PERCENT_TRAIN, 1-PERCENT_TRAIN], generator=generator)
 dl_train = DataLoader(ds_train, batch_size=BATCH_SIZE, shuffle=True)
