@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
 from unet_model import UNet
 from CAREDataset import CAREDataset
-from utils import collate, save_img
+from utils import save_img
 
 # Hyperparameters
 SEED = 1
