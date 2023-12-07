@@ -102,19 +102,18 @@ while True:
 
         # Open image and save its original dimensions
         inp_tensor = Image.open(inp_img)
-        inp_tensor = ToTensor()(inp_tensor)
+        inp_tensor = ToTensor()(inp_tensor).float().to(DEVICE)
         inp_tensor = torch.unsqueeze(inp_tensor, dim=0)
         original_dims = inp_tensor.shape
 
         # Modify tensor for being input to the model
-        inp_tensor = torch.sigmoid(inp_tensor).float().to(DEVICE)
+        # inp_tensor = torch.sigmoid(inp_tensor).float().to(DEVICE)
+        inp_tensor = torch.nn.functional.normalize(inp_tensor)
         inp_tensor = tensor_to_patches(inp_tensor, 64)
-        # inp_tensor = torch.reshape(inp_tensor, (-1,1,64,64))
 
         # Get output, return it from the patches
         out_image = model(inp_tensor)
         out_image = patches_to_tensor(out_image, original_dims, 64)
-        # out_image = torch.reshape(out_image, original_dims)
         save_image(out_image, out_path)
         window["-OUT IMG-"].update(filename=out_path)
         window["-OUT TITLE-"].update(out_path)

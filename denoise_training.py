@@ -13,7 +13,7 @@ ALPHA = 1e-3
 BATCH_SIZE = 16
 PERCENT_TRAIN = 0.8
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-SAVE_IMAGES = True
+SAVE_IMAGES = False
 MODEL_FILENAME = 'tubulin_model_testing.pt'
 
 fp = "./data/Synthetic_tubulin_gfp/train_data/data_label.npz"
