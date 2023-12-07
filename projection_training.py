@@ -9,10 +9,7 @@ from utils import save_img
 # TODO
 #  Solve the all batches give the same value bug
 
-# Remove randomness
-torch.manual_seed(1)
-torch.cuda.manual_seed(1)
-
+# Hyperparameters
 IMAGE_SIZE = 64*64
 N_HIDDEN = 2048
 BATCH_SIZE = 8
@@ -21,6 +18,10 @@ ALPHA = 1e-5
 EPOCHS = 1000
 PERCENT_TRAIN = 0.8
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+# Remove randomness
+torch.manual_seed(1)
+torch.cuda.manual_seed(1)
 
 # Create model
 print("Creating model")
@@ -109,13 +110,12 @@ with torch.no_grad():
         avg_loss += loss.item()
 
         # Save example image
-        if i == 1:
+        if i == 1 and BATCH_SIZE >= 2:
             save_img(targets[0, :].detach().cpu().numpy(), "Projection Target 0", "outputs/projection_target0.png", 64, 64)
             save_img(predict[0, :].detach().cpu().numpy(), "Projection Prediction 0", "outputs/projection_prediction0.png", 64, 64)
             save_img(targets[1, :].detach().cpu().numpy(), "Projection Target 1", "outputs/projection_target1.png", 64, 64)
             save_img(predict[1, :].detach().cpu().numpy(), "Projection Prediction 1", "outputs/projection_prediction1.png", 64, 64)
-            save_img(targets[2, :].detach().cpu().numpy(), "Projection Target 2", "outputs/projection_target2.png", 64, 64)
-            save_img(predict[2, :].detach().cpu().numpy(), "Projection Prediction 2", "outputs/projection_prediction2.png", 64, 64)
+
 
 avg_loss /= len(dl_test)
 print(avg_loss)
